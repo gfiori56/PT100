@@ -55,6 +55,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     m_ymax = cnf.get_number("Y_MAX", Y_MAX);
     m_hold = cnf.get_number("HOLD", 0);
     m_hold_cpy = !m_hold;
+    qLed = new FLed(ui->lb_led);
+
+    show_hold_status();
 
     qDebug() << "Y MAX/MIN/HOLD" << m_ymax << m_ymin << m_hold;
 
@@ -84,7 +87,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     frs.add(ui->bt_ymin_plus, FrmResize::CW_TYPE::eBUTTON);
     frs.add(ui->bt_ymin_minus, FrmResize::CW_TYPE::eBUTTON);
     frs.add(ui->txt_overrun, FrmResize::CW_TYPE::eTEXT);
-    //frs.add(ui->lb_overrun, FrmResize::CW_TYPE::eGENERIC);
+    frs.add(ui->lb_led, FrmResize::CW_TYPE::eGENERIC);
     frs.add(ui->cmb_ip, FrmResize::CW_TYPE::eGENERIC);
     frs.add(ui->bt_ip, FrmResize::CW_TYPE::eBUTTON);
     frs.add(ui->bt_exit, FrmResize::CW_TYPE::eBUTTON);
@@ -96,11 +99,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ovrcnt = 0;
     RxWait = false;
 
-    ui->bt_reset->setEnabled(m_hold);
-    if(m_hold)
-        ui->bt_hold->setText("Run");
-    else
-        ui->bt_hold->setText("Hold");
     rx_full_buffer.clear();
     initSocket();
 
@@ -178,8 +176,7 @@ void MainWindow::my_timer() {
             ui->txt_overrun->setText(QString::number(ovrcnt) + " error(s)");
 #ifdef AUTOMATIC_HOLD
             m_hold = true;
-            ui->bt_reset->setEnabled(m_hold);
-            ui->bt_hold->setText("Run");
+            show_hold_status();
 #endif
         }
         return;
@@ -351,14 +348,22 @@ void MainWindow::readPendingDatagrams() {
           }
       }
 }
+void MainWindow::show_hold_status()
+{
+    if(m_hold)
+    {
+        ui->bt_hold->setText("Run");
+        qLed->LedInsideLabel(FLed::Red);
+    } else {
+        ui->bt_hold->setText("Hold");
+        qLed->LedInsideLabel(FLed::Green);
+    }
+    ui->bt_reset->setEnabled(m_hold);
+}
 void MainWindow::slot_hold()
 {
     m_hold = !m_hold;
-    ui->bt_reset->setEnabled(m_hold);
-    if(m_hold)
-        ui->bt_hold->setText("Run");
-    else
-        ui->bt_hold->setText("Hold");
+    show_hold_status();
 
     KeyFile cnf(gs_rdsfile);
     cnf.put_number("HOLD", (int)m_hold);

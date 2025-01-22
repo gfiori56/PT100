@@ -27,6 +27,8 @@ private:
     Ui::MainWindow *ui;
     Flow      f;
     FrmResize frs;
+    FLed   * qLed;
+
     long txcnt;
     long ovrcnt;
 
@@ -43,7 +45,7 @@ private:
     QString rx_previous;
 
     bool chk_rx_full_buffer();
-
+    void show_hold_status();
     void initSocket();
     void exitSocket();
     void tx_reset();
